@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+{% load bootstrap4 %}
+<a class="btn btn-primary" href="{% url 'aplicacion:createUsu'%}"> Nuevo </a>
+<ul class="list-group">
+    {% for usuario in object_list %}
+        <li class="list-group-item"><a href="{% url 'aplicacion:detailUsu' usuario.id %}">{{ usuario.nombre }}</a>  {{ usuario.nick }}</li>
+    {% empty %}
+        <li>No hay usuarios.</li>
+    {% endfor %}
+ </ul>
+ {% endblock %}
