@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+ <meta charset="utf-8">
+ <title>Index Formularios</title>
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <meta name="description" content="A simple crud app made with the vue js and django">
+<meta name="keywords" content="vuejs, django, crudapp, restapi">
+ <!-- bootstap -->
+ <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+ <!-- boostrap css -->
+
+
+</head>
+
+<body>
+
+        <nav class="navbar navbar-expand-lg navbar-light bg-light navbar-dark bg-dark">
+                <!-- <a class="navbar-brand" href="#">Navbar</a> -->
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                          <span class="navbar-toggler-icon"></span>
+                        </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+        
+                        <li class="nav-item">
+                            <a class="nav-link" href="/formulario">Formularios</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/usuario">Usuario</a>
+                        </li>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/respuesta">Respuestas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/users/logout">Cerrar sesiòn</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            {% if user.is_authenticated %}
+
+        
+            <div class="form-inline my-2 my-lg-0" style="margin-left: 40%;">
+                <input class="form-control mr-sm-2" type="text" placeholder="Search" v-model="search_term" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" v-on:click.prevent="getFormularios()">Search</button>
+              </div>
+
+
+        <div id="starting">
+                <div class="container">
+                  <div class="row">
+                    <h1>List of Forms
+                    <button class="btn btn-success" @click="abrirVentanaModal('uno','registrar')">ADD FORM</button>
+                    </h1>
+                    <template v-if="listado==1">
+                    <table class="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">#</th>
+                          <th scope="col">Nombre</th>
+                          <th scope="col">Formulario creador</th>
+                          <th scope="col">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="formulario in formularios">
+                          <th scope="row">${formulario.id}</th>
+                          <td>${formulario.nombre}</td>
+                          <td>${formulario.user}</td>
+                          <td>
+                            <button class="btn btn-info" v-on:click="getFormulario(formulario.nombre)">Edit</button>
+                            <button class="btn btn-danger" v-on:click="deleteFormulario(formulario.nombre)">Delete</button>
+                            <button class="btn btn-danger" v-on:click="abrirVentanaModal( 'uno','detalle',formulario)">Detalle</button>
+                            <button class="btn btn-danger" v-on:click="abrirVentanaModal('uno','ver',formulario)">Asignar</button>
+                            <button class="btn btn-danger" v-on:click="abrirVentanaModal('uno','verformulario',formulario)">Ver formulario</button>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </template>
+
+                  <template v-else-if="listado==2">
+                      <div class="card-body">
+                          <div class="form-group row border">
+                              <div class="col-md-4">
+                                      <label class="col-md-5 form-control-label" for="text-input">Nombre(*)</label>
+                                      <input type="text" class="form-control" disabled placeholder="Nombre" name="nombre" v-model="nombre">
+      
+                              </div>
+                               <div class="col-md-3">
+                                  <label class="col-md-9 form-control-label" for="text-input">Descripcion(*)</label>
+                                 <textarea name="" id="" cols="30" rows="5" v-model="descripcion">
+  
+                                 </textarea>
+                              </div>
+                              
+                               <div class="col-md-3">
+                                      <label class="col-md-9 form-control-label" for="text-input">Fecha(*)</label>
+                                      <input type="date"  v-model="fecha" class="form-control" placeholder="Ingrese fecha">
+                              </div>
+                              <div class="col-md-3">
+                                      <label class="col-md-5 form-control-label" for="text-input">Usuario(*)</label>
+                                      <select v-model="usuario" class="form-control">
+                                              <option value="0" disabled>Seleccione usuario</option>
+                                              <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id" v-text="usuario.descripcion"></option>
+                                           
+                                      </select>
+                                      <br>
+                              <button @click="abrirModal()" class="btn btn-primary">Agregar pregunta</button>
+                              
+                              </div>
+                              
+                             
+                              <!-- <div class="col-md-12">
+                                  <div v-show="errorDiseno" class="form-group row div-error">
+                                      <div class="text-center text-error">
+                                          <div v-for="error in errorMensajeDiseno" :key="error" v-text="error">
+      
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div> -->
+                          </div>
+                          <div class="form-group row border">
+                              <div class="table-responsive col-md-12">
+                                  <table class="table table-bordered table-striped table-sm">
+                                      <thead>
+                                          <tr>
+                                              <th>Opciones</th>
+                                              <th>Pregunta</th>
+         
+                                          </tr>
+                                      </thead>
+                                      <tbody v-if="arrayDetalle.length">
+                                          <tr v-for="(detalle,index) in arrayDetalle" :key="detalle.id">
+                                              <td>
+                                                  <!-- <button @click="asignarDetalle(detalle.id)" type="button" class="btn btn-danger btn-sm">
+                                                      <i class="icon-close">asignar</i>
+                                                  </button> -->
+                                              </td>
+                                              <td v-text="detalle.pregunta"></td>
+                                          </tr>
+                                      </tbody>
+                                      <tbody v-else>
+                                          <tr>
+                                              <td colspan="7">
+                                                  NO hay preguntas agregadas
+                                              </td>
+                                          </tr>
+                                      </tbody>
+                                  </table>
+                              </div>
+                          </div>
+                          <div class="form-group row">
+                              <div class="col-md-12">
+                                  <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Guardar</button>
+                                  <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Cerrar</button>
+                              </div>
+                          </div>
+                      </div>
+                  </template>
+                  <template v-else-if="listado==3">
+                    <div class="card-body">
+                      <div class="form-group row border">
+                          <div class="col-md-4">
+                                  <label class="col-md-5 form-control-label" for="text-input">Nombre(*)</label>
+                                  <input type="text" class="form-control" disabled placeholder="Nombre" name="nombre" v-model="nombre">
+  
+                          </div>
+                           <div class="col-md-3">
+                              <label class="col-md-9 form-control-label" for="text-input">Descripcion(*)</label>
+                             <textarea name="" id="" cols="30" rows="5" v-model="descripcion">
+
+                             </textarea>
+                          </div>
+                          
+                           <div class="col-md-3">
+                                  <label class="col-md-9 form-control-label" for="text-input">Fecha(*)</label>
+                                  <input type="date"  v-model="fecha" class="form-control" placeholder="Ingrese fecha">
+                          </div>
+                          <div class="col-md-3">
+                                  <label class="col-md-5 form-control-label" for="text-input">Usuario(*)</label>
+                                  <select v-model="usuario" class="form-control">
+                                          <option value="0" disabled>Seleccione usuario</option>
+                                          <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id" v-text="usuario.descripcion"></option>
+                                       
+                                  </select>
+                                  <br>
+                          <!-- <button @click="abrirModal()" class="btn btn-primary">Agregar pregunta</button> -->
+                          
+                          </div>
+                          
+                         
+                          <!-- <div class="col-md-12">
+                              <div v-show="errorDiseno" class="form-group row div-error">
+                                  <div class="text-center text-error">
+                                      <div v-for="error in errorMensajeDiseno" :key="error" v-text="error">
+  
+                                      </div>
+                                  </div>
+                              </div>
+                          </div> -->
+                      </div>
+                      <div class="form-group row border">
+                          <div class="table-responsive col-md-12">
+                              <table class="table table-bordered table-striped table-sm">
+                                  <thead>
+                                      <tr>
+                                          <th>Opciones</th>
+                                          <th>Pregunta</th>
+                                      </tr>
+                                  </thead>
+                                  <tbody v-if="arrayDetalle.length">
+                                      <tr v-for="(detalle,index) in arrayDetalle" :key="detalle.id">
+                                          <td>
+                                              <button @click="eliminarDetalle(index, detalle.pregunta)" type="button" class="btn btn-danger btn-sm">
+                                                  <i class="icon-close">eliminar</i>
+                                              </button>
+                                              <button @click="asignarDetalle(detalle.pregunta)" type="button" class="btn btn-primary btn-sm">
+                                                <i class="icon-close">asignar</i>
+                                            </button>
+                                          </td>
+                                          <td v-text="detalle.pregunta"></td>
+                                      </tr>
+                                  </tbody>
+                                  <tbody v-else>
+                                      <tr>
+                                          <td colspan="7">
+                                              NO hay preguntas agregadas
+                                          </td>
+                                      </tr>
+                                  </tbody>
+                              </table>
+                          </div>
+                      </div>
+                      <div class="form-group row">
+                          <div class="col-md-12">
+                              <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Guardar</button>
+                              <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Cerrar</button>
+                          </div>
+                      </div>
+                  </div>
+              </template>
+              <template v-else-if="listado==4">
+                <div class="card-body">
+                  <div class="form-group row border">
+                      <div class="col-md-4">
+                              <label class="col-md-5 form-control-label" for="text-input">Nombre(*)</label>
+                              <input type="text" class="form-control" disabled placeholder="Nombre" name="nombre" v-model="nombre">
+
+                      </div>
+                       <div class="col-md-3">
+                          <label class="col-md-9 form-control-label" for="text-input">Descripcion(*)</label>
+                         <textarea name="" id="" cols="30" rows="5" v-model="descripcion">
+
+                         </textarea>
+                      </div>
+                      
+                       <div class="col-md-3">
+                              <label class="col-md-9 form-control-label" for="text-input">Fecha(*)</label>
+                              <input type="date"  v-model="fecha" class="form-control" placeholder="Ingrese fecha">
+                      </div>
+                      <div class="col-md-3">
+                              <label class="col-md-5 form-control-label" for="text-input">Usuario(*)</label>
+                              <select v-model="usuario" class="form-control">
+                                      <option value="0" disabled>Seleccione usuario</option>
+                                      <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id" v-text="usuario.descripcion"></option>
+                                   
+                              </select>
+                              <br>
+                      <!-- <button @click="abrirModal()" class="btn btn-primary">Agregar pregunta</button> -->
+                      
+                      </div>
+                      
+                     
+                      <!-- <div class="col-md-12">
+                          <div v-show="errorDiseno" class="form-group row div-error">
+                              <div class="text-center text-error">
+                                  <div v-for="error in errorMensajeDiseno" :key="error" v-text="error">
+
+                                  </div>
+                              </div>
+                          </div>
+                      </div> -->
+                  </div>
+                  <div class="form-group row border">
+                      <div class="table-responsive col-md-12">
+                          <table class="table table-bordered table-striped table-sm">
+                              <thead>
+                                  <tr>
+                                      <th>Opciones</th>
+                                      <th>Id</th>
+                                      <!-- <th>Pregunta</th> -->
+ 
+                                  </tr>
+                              </thead>
+                              <tbody v-if="arrayDetalle.length">
+                                  <tr v-for="(detalle,index) in arrayDetalle" :key="detalle.id">
+                                      <td>
+                                          
+                                          <button @click="abrirModala(detalle)" type="button" class="btn btn-primary btn-sm">
+                                            <i class="icon-close">responder</i>
+                                        </button>
+                                      </td>
+                                      <!-- <td v-text="detalle.id"></td> -->
+                                      <td v-text="detalle"></td>
+                                      <!-- <td v-text="detalle.pregunta"></td> -->
+                                  </tr>
+                              </tbody>
+                              <tbody v-else>
+                                  <tr>
+                                      <td colspan="7">
+                                          NO hay preguntas agregadas
+                                      </td>
+                                  </tr>
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+                  <div class="form-group row">
+                      <div class="col-md-12">
+                          <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Guardar</button>
+                          <button type="button" @click="cerrarVentanaModal()" class="btn btn-secondary">Cerrar</button>
+                      </div>
+                  </div>
+              </div>
+          </template>
+                  </template>
+                  <template v-else-if="listado==0">
+                    <div class="card-body">
+                        <div class="form-group row border">
+                            <div class="col-md-4">
+                                    <label class="col-md-5 form-control-label" for="text-input">Nombre(*)</label>
+                                    <input type="text" class="form-control" placeholder="Nombre" name="nombre" v-model="nombre">
+    
+                            </div>
+                             <div class="col-md-3">
+                                <label class="col-md-9 form-control-label" for="text-input">Descripcion(*)</label>
+                               <textarea name="" id="" cols="30" rows="5" v-model="descripcion">
+
+                               </textarea>
+                            </div>
+                            
+                             <div class="col-md-3">
+                                    <label class="col-md-9 form-control-label" for="text-input">Fecha(*)</label>
+                                    <input type="date"  v-model="fecha" class="form-control" placeholder="Ingrese fecha">
+                            </div>
+                            <div class="col-md-3">
+                                    <label class="col-md-5 form-control-label" for="text-input">Usuario(*)</label>
+                                    <select v-model="usuario" class="form-control">
+                                            <option value="0" disabled>Seleccione usuario</option>
+                                            <option v-for="usuario in usuarios" :key="usuario.id" :value="usuario.id" v-text="usuario.descripcion"></option>
+                                         
+                                    </select>
+                                    <br>
+                                 
+                                    <button @click="guardarFormulario()" class="btn btn-primary">Guardar</button><br><br>
+                            
+                            </div>
+                            
+                           
+                            <div class="col-md-12">
+                                <div v-show="errorFormulario" class="form-group row div-error">
+                                    <div class="text-center text-error">
+                                        <div v-for="error in errorMensajeFormulario" :key="error" v-text="error">
+    
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                </template>
+
+
+                <!--Modal para pregunta-->
+
+                <div class="modal fade" tabindex="-1" :class="{'mostrar': modal}" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-primary modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" v-text="TituloModal"></h4>
+                                <button type="button" class="close" @click="cerrarModal()" aria-label="Close">
+                                              <span aria-hidden="true">×</span>
+                                            </button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="text-input">Pregunta</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="pregunta" class="form-control" placeholder="Ingrese pregunta">
+                                            <span class="help-block">(*) Ingrese pregunta</span>
+                                        </div>
+                                    </div>
+                                    
+        
+                                    <!-- <div v-show="errorDiseno1" class="form-group row div-error">
+                                        <div class="text-center text-error">
+                                            <div v-for="error in errorMensajeDiseno1" :key="error" v-text="error">
+        
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @click="cerrarModal()">Guardar</button>
+                                <button type="button" class="btn btn-primary" @click="agregarEstilo()">Agregar</button>
+        
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+                <div class="modal fade" tabindex="-1" :class="{'mostrar': modala}" role="dialog" aria-labelledby="myModalLabel" style="display: none;" aria-hidden="true">
+                    <div class="modal-dialog modal-primary modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title" v-text="TituloModal"></h4>
+                                <button type="button" class="close" @click="cerrarModal()" aria-label="Close">
+                                              <span aria-hidden="true">×</span>
+                                            </button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="" method="post" enctype="multipart/form-data" class="form-horizontal">
+                                    <div class="form-group row">
+                                        <label class="col-md-3 form-control-label" for="text-input">Respuesta</label>
+                                        <div class="col-md-9">
+                                            <input type="text" v-model="respuesta" class="form-control" placeholder="Ingrese respuesta">
+                                            <span class="help-block">(*) Ingrese Respuesta</span>
+                                        </div>
+                                    </div>
+                                    
+        
+                                    <!-- <div v-show="errorDiseno1" class="form-group row div-error">
+                                        <div class="text-center text-error">
+                                            <div v-for="error in errorMensajeDiseno1" :key="error" v-text="error">
+        
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" @click="guardarRespuesta()">Guardar</button>
+                                <button type="button" class="btn btn-primary" @click="cerrarModal()">cerrar</button>
+        
+                            </div>
+                        </div>
+                        <!-- /.modal-content -->
+                    </div>
+                    <!-- /.modal-dialog -->
+                </div>
+
+
+          <!-- Edit Formulario Modal -->
+          <div class="modal fade" id="editFormularioModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="exampleModalLongTitle">EDIT ARTICLE</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <form v-on:submit.prevent="updateFormulario()">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombre">Nombre</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="nombre"
+                          placeholder="Enter nombre"
+                          v-model="currentFormulario.nombre"
+                          required="required" >
+                      </div>
+                      <div class="form-group">
+                        <label for="descripcion">Descripcion</label>
+                        <textarea
+                          type="text"
+                          class="form-control"
+                          id="descripcion"
+                          placeholder="Enter descripcion"
+                          v-model="currentFormulario.descripcion"
+                          required="required" ></textarea>
+                      </div>
+                      <div class="form-group">
+                        <label for="fecha">Fecha</label>
+                        <input
+                          type="date"
+                          class="form-control"
+                          id="fecha"
+                          placeholder="Enter fecha"
+                          v-model="currentFormulario.fecha"
+                          required="required" >
+                      </div>
+                      <div class="form-group">
+                        <label for="usuario">Usuario</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="usuario"
+                          placeholder="Enter usuario"
+                          v-model="currentFormulario.usuario"
+                          required="required" >
+                      </div>
+                      <div class="form-group">
+                        <label for="link">Link</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="link"
+                          placeholder="Enter link"
+                          v-model="currentFormulario.link">
+                      </div>
+                      <div class="form-group">
+                        <label for="pregunta">Pregunta</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="pregunta"
+                          placeholder="Enter Pregunta"
+                          v-model="currentFormulario.pregunta">
+                      </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary m-progress" data-dismiss="modal">Close</button>
+                  <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+                </form>
+              </div>
+            </div>
+            <div class="loading" v-if="loading===true">Loading&#8230;</div>
+          </div>
+          <!-- End of edit formulario modal -->
+                  </div>
+                </div>
+                <div class="loading" v-if="loading===true">Loading&#8230;</div>
+              </div>
+
+          
+              {% endif %}
+            
+
+
+
+<!-- bootrtap js files -->
+ <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+ <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+ 
+ <!-- vue.js files -->
+ <script src="https://cdn.jsdelivr.net/npm/vue@2.5.13/dist/vue.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/vue-resource@1.3.5"></script>
+ <script type="text/javascript">
+    Vue.http.headers.common['X-CSRFToken'] = "{{ csrf_token }}";
+    new Vue({
+      el: '#starting',
+      delimiters: ['${','}'],
+      data: {
+      usuarios:[],
+      idpregunta: 0,
+      arrayDetalle:[],
+      idusuario:0,
+      arrayPregunta: [],
+      formularios: [],
+      arrayPregun: [],
+      tipoAccion: 0,
+      modal:0,
+      listado: 1,
+      loading: true,
+      currentFormulario: {},
+      search_term: '',
+      errorFormulario: '',
+      errorMensajeFormulario : [],
+      message: null,
+      nombre:'',
+      idformulario: 0,
+      respuesta: '',
+      descripcion:'',
+      fecha:'',
+      usuario:0,
+      link:'',
+      pre: '',
+      TituloModal: '',
+      pregunta:0,
+      formulario:0,
+      modala: 0,
+      //newFormulario: { 'nombre': null, 'descripcion': null, 'fecha': null, 'usuario': null, 'link': null, 'pregunta': null},
+    },
+    mounted: function() {
+      this.getFormularios();
+      this.getUsuario();
+      // this.getUser();
+   },
+    methods: {
+      guardarFormulario(){
+        if (this.validarFormulario()) {
+                        return;
+                    }
+                    datos = new FormData();
+                    datos.append('nombre', this.nombre);
+                    datos.append('descripcion', this.descripcion);
+                    datos.append('fecha', this.fecha);
+                    datos.append('user', this.usuario);
+
+                    this.loading = true;
+                    this.$http.post('/api/formulario/', datos).then((response) => {
+
+                            //console.log(response);
+                            this.loading = false;
+                            
+                            this.cerrarVentanaModal();
+                            this.getFormularios();
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+      },
+      cerrarVentanaModal (){
+        this.listado=1;
+      },
+      cerrarModal() {
+                    this.pregunta = " ";
+                    this.modal = 0;
+                    this.respuesta = "";
+                    this.modala = 0;
+                    // this.errorropa = 0;
+                },
+      eliminarDetalle(index, id) {
+                    let me = this;
+                    me.arrayDetalle.splice(index, 1);
+                    this.loading = true;
+                    // console.log(id);
+          this.$http.delete(`/api/pregunta/${id}/`)
+              .then((response) => {
+                this.loading = false;
+                this.getFormularios();
+              })
+              .catch((err) => {
+                this.loading = false;
+                console.log(err);
+              })
+        
+
+                },
+        validarFormulario(){
+            this.errorFormulario=0;
+                this.errorMensajeFormulario =[];
+
+           
+                if (this.usuario==0) this.errorMensajeFormulario.push("Seleccione un usuario");
+                if (!this.nombre) this.errorMensajeFormulario.push("Ingrese el nombre ");
+                if (!this.descripcion) this.errorMensajeFormulario.push("Ingrese una descripcion");
+                if (!this.fecha) this.errorMensajeFormulario.push("Ingrese una fecha");
+
+
+                if (this.errorMensajeFormulario.length) this.errorFormulario = 1;
+
+                return this.errorFormulario;
+        }, 
+      abrirModal() {
+                    this.modal = 1;
+                    this.TituloModal = "Registrar preguntas";
+                    this.pregunta = '';
+                },
+    abrirModala(res) {
+        this.pre = res;
+        this.modala = 1;
+        this.TituloModal = "Registrar Respuesta";
+        this.respuesta = '';
+       
+  
+    },
+    guardarRespuesta(){
+        // console.log(this.pre);
+        this.$http.post('/api/respuesta/',{
+                        'formulario' : this.idformulario,
+                        'pregunta' : this.pre,
+                        'respuesta' : this.respuesta,
+                        'user' : this.usuario
+                      }).then((response) => {
+                          console.log(response);
+                      this.loading = false;
+                      this.cerrarModal();
+                      this
+                      })
+                      .catch((err) => {
+                      this.loading = false;
+                      console.log(err);
+                      })
+    },
+      agregarEstilo() {
+                    // if (this.validar()) {
+                    //     return;
+                    // }
+                    let me = this;
+                    me.arrayDetalle.push({
+                        'pregunta': me.pregunta,
+                    });
+                  
+
+                    // console.log(this.pregunta);
+                    // console.log(this.idformulario);
+                      this.$http.post('/api/pregunta/',{
+                        // 'formulario' : this.idformulario,
+                        'pregunta' : this.pregunta
+                      }).then((response) => {
+
+                      this.loading = false;
+                     
+                      })
+                      .catch((err) => {
+                      this.loading = false;
+                      console.log(err);
+                      })
+                      this.pregunta = "";
+                    this.modal = 0;
+                    // this.listado = 
+                },
+      abrirVentanaModal(modelo, accion, data = []) {
+                    this.getUsuario();
+                    //modelo nombre del modelo
+                    //accion registrar o actualizar
+                    //data el objeto correspondiente a una fila de la tabla
+                    switch (modelo) {
+                        case "uno":
+                            {
+                                switch (accion) {
+                                    case "registrar":
+                                        {
+                                          // console.log('hola')
+                                            this.nombre = '';
+                                            this.descripcion = '';
+                                            this.fecha = '';
+                                            this.usuario = 0;
+                                            this.link = '';
+                                            this.tipoAccion = 1;
+                                            this.listado=0;
+                                            // console.log(this.listado)
+                                            break;
+                                        }
+                                  
+                                    case "detalle":
+                                        {
+                                          // console.log('hola')
+                                            // console.log(data);
+                                              this.nombre = data['nombre'];
+                                              this.descripcion = data['descripcion'];
+                                              this.fecha = data['fecha'];
+                                              this.usuario = data['user'];
+                                              this.idformulario = data['id'];
+                                              this.arrayDetalle = [];
+                                              // this.tipoAccion = 1;
+                                            this.listado=2;
+
+                                            // console.log(this.listado)
+                                            break;
+                                        }
+                                        case "ver":
+                                        {
+                                            this.listado=3;
+                                            this.nombre = data['nombre'];
+                                              this.descripcion = data['descripcion'];
+                                              this.fecha = data['fecha'];
+                                              this.usuario = data['user'];
+                                              this.idformulario = data['nombre'];
+                                              this.loading = true;
+                                              let me = this;
+                                              var array = [];
+                                        this.$http.get('/api/pregunta/')
+                                            .then((response) => {
+                                              var respuesta = response.data;
+                                              me.arrayDetalle = respuesta;
+                                                // this.usuarios = response.data;
+                                                // console.log(this.ropas);
+                                                this.loading = false;
+                                            })
+                                            .catch((err) => {
+                                                this.loading = false;
+                                                console.log(err);
+                                            })
+
+
+                                            break;
+                                        }
+                                        case 'verformulario' : {
+                                          this.listado=4;
+                                            this.nombre = data['nombre'];
+                                              this.descripcion = data['descripcion'];
+                                              this.fecha = data['fecha'];
+                                              this.usuario = data['user'];
+                                              this.idformulario = data['nombre'];
+                                              this.loading = true;
+                                              let me = this;
+                                              this.$http.get(`/api/formulario/${this.idformulario}/`)
+                                              .then((response) => {
+                                                //   console.log(response.data.pregunta)
+                                                me.arrayPregun= response.data.pregunta;
+                                                me.arrayDetalle = me.arrayPregun;
+                                              this.loading = false;
+                                              })
+                                              .catch((err) => {
+                                              this.loading = false;
+                                              console.log(err);
+                                              })
+                                      
+                                          break;
+                                        }
+                              
+                                }
+                            }
+                    }
+                },
+      
+      getUsuario() {
+                    this.loading = true;
+                    this.$http.get('/api/profile/')
+                        .then((response) => {
+                            // console.log(response)
+                            this.usuarios = response.data;
+                            // console.log(this.ropas);
+                            this.loading = false;
+                        })
+                        .catch((err) => {
+                            this.loading = false;
+                            console.log(err);
+                        })
+                },
+        getFormularios: function() {
+          let api_url = '/api/formulario/';
+          if(this.search_term!==''||this.search_term!==null) {
+            api_url = `/api/formulario/?search=${this.search_term}`
+          }
+          this.loading = true;
+          this.$http.get(api_url)
+              .then((response) => {
+                this.formularios = response.data;
+                this.loading = false;
+              })
+              .catch((err) => {
+                this.loading = false;
+                console.log(err);
+              })
+        },
+        asignarDetalle(id){
+          console.log(id);
+
+          this.$http.post('/api/asigpregunta/',{
+                        // 'formulario' : this.idformulario,
+                        'pregunta' : id,
+                        'formulario' : this.idformulario
+                      }).then((response) => {
+//                         Swal.fire({
+//   position: 'top-end',
+//   icon: 'success',
+//   title: 'Your work has been saved',
+//   showConfirmButton: false,
+//   timer: 1500
+// })
+                      this.loading = false;
+                     
+                      })
+                      .catch((err) => {
+                      this.loading = false;
+                      console.log(err);
+                      })
+        },
+        getFormulario: function(id) {
+          this.loading = true;
+          this.$http.get(`/api/formulario/${id}/`)
+              .then((response) => {
+                this.currentFormulario = response.data;
+                $("#editFormularioModal").modal('show');
+                this.loading = false;
+              })
+              .catch((err) => {
+                this.loading = false;
+                console.log(err);
+              })
+        },
+        addFormulario: function() {
+          this.loading = true;
+          console.log(this.idusuario)
+          this.$http.post('/api/formulario/',this.newFormulario)
+              .then((response) => {
+                this.loading = true;
+                this.getFormularios();
+              })
+              .catch((err) => {
+                this.loading = true;
+                console.log(err);
+              })
+        },
+     
+        updateFormulario: function() {
+          this.loading = true;
+          this.$http.put(`/api/formulario/${this.currentFormulario.id}/`, this.currentFormulario)
+              .then((response) => {
+                this.loading = false;
+                this.currentFormulario = response.data;
+                this.getFormularios();
+              })
+              .catch((err) => {
+                this.loading = false;
+                console.log(err);
+              })
+        },
+        deleteFormulario: function(id) {
+          this.loading = true;
+          this.$http.delete(`/api/formulario/${id}/`)
+              .then((response) => {
+                this.loading = false;
+                this.getFormularios();
+              })
+              .catch((err) => {
+                this.loading = false;
+                console.log(err);
+              })
+        }
+   }
+   
+    });
+    </script>
+</body>
+</html>
+
+<style>
+    .modal-content {
+        width: 100% !important;
+        position: absolute !important;
+    }
+
+    .mostrar {
+        display: list-item !important;
+        opacity: 1 !important;
+        position: absolute !important;
+        background-color: #3c29297a !important;
+    }
+
+    .div-error {
+        display: flex;
+        justify-content: center;
+    }
+
+    .text-error {
+        color: red !important;
+        font-weight: bold;
+    }
+</style>
